@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iban Boat Race</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body, button, input, textarea, select {
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+            line-height: 1.6;
+        }
+        .pixel-border {
+            border-style: solid;
+            border-width: 4px;
+            border-image-slice: 2;
+            border-image-width: 2;
+            border-image-repeat: stretch;
+            border-image-source: url('data:image/svg+xml;utf8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="6" height="6"><defs><pattern id="p" width="2" height="2" patternUnits="userSpaceOnUse"><path d="M0,0h1v1h-1z M1,1h1v1h-1z" fill="black"/></pattern></defs><rect width="6" height="6" fill="white"/><rect width="6" height="6" fill="url(%23p)"/></svg>');
+            border-image-outset: 2;
+            image-rendering: pixelated;
+        }
+        .pixel-button {
+            background-color: #a0a0a0;
+            border: 4px solid #505050;
+            color: #ffffff;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 10px;
+            cursor: pointer;
+            image-rendering: pixelated;
+            box-shadow: inset -2px -2px 0px 0px #707070, inset 2px 2px 0px 0px #d0d0d0;
+            transition: background-color 0.1s ease;
+        }
+        .pixel-button:hover { background-color: #b0b0b0; }
+        .pixel-button:active {
+            background-color: #909090;
+            box-shadow: inset 2px 2px 0px 0px #707070, inset -2px -2px 0px 0px #d0d0d0;
+        }
+        #race-track {
+            width: 100%;
+            height: 150px;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    #1092e9 0px,
+                    #1092e9 24px,
+                    #5ec6fa 24px,
+                    #5ec6fa 48px,
+                    #1092e9 48px,
+                    #1092e9 72px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    #1092e9 0px,
+                    #1092e9 24px,
+                    #5ec6fa 24px,
+                    #5ec6fa 48px,
+                    #1092e9 48px,
+                    #1092e9 72px
+                );
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #022e4b;
+            image-rendering: pixelated;
+            box-shadow: 0 0 0 8px #1e3a5c inset;
+        }
+        #player-boat {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 5%;
+            width: 50px;
+            height: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 30"><path d="M0 20 L5 10 L45 10 L50 20 L40 30 L10 30 Z" fill="%238B4513" stroke="%23000000" stroke-width="2"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: left 0.5s linear;
+            image-rendering: pixelated;
+        }
+        #river-obstacle {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 45%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+        #river-obstacle img {
+            height: 60px;
+            image-rendering: pixelated;
+        }
+        #finish-line {
+            position: absolute;
+            right: 5%;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background-image: repeating-linear-gradient(
+                0deg,
+                #ffffff,
+                #ffffff 10px,
+                #000000 10px,
+                #000000 20px
+            );
+            border-left: 2px solid black;
+            border-right: 2px solid black;
+            image-rendering: pixelated;
+        }
+        .panel {
+            background-color: #c0c0c0;
+            border: 4px solid #505050;
+            padding: 20px;
+            image-rendering: pixelated;
+        }
+        .hidden { display: none; }
+        #leaderboard {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 4px solid #505050;
+            background-color: #e0e0e0;
+            padding: 10px;
+        }
+        #leaderboard table { width: 100%; border-collapse: collapse; }
+        #leaderboard th, #leaderboard td { text-align: left; padding: 5px; }
+        #congrats-image {
+            max-width: 200px;
+            margin: 20px auto;
+            border: 4px solid #505050;
+            image-rendering: pixelated;
+        }
+        #challenge-modal img { image-rendering: pixelated; }
+        #challenge-tiles button { margin: 2px; }
+        #challenge-warning {
+            font-size: 1em;
+            color: #b91c1c;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #selected-order {
+            margin: 10px 0;
+            min-height: 32px;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+        }
+        #selected-order .selected-box {
+            min-width: 60px;
+            min-height: 28px;
+            border: 2px solid #505050;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            margin: 0 2px;
+            box-shadow: inset 1px 1px 0 #d0d0d0;
+        }
+    </style>
+</head>
+<body class="bg-gray-700 flex flex-col items-center justify-center min-h-screen p-4 text-xs sm:text-sm">
+    <div id="game-container" class="bg-gray-300 rounded-none shadow-lg w-full max-w-3xl p-5 pixel-border">
+        <h1 class="text-lg sm:text-xl text-center mb-4 text-gray-800">River Of Words</h1>
+        <div id="hud" class="flex justify-between items-center mb-4 panel text-gray-800">
+            <div>Score: <span id="score" class="font-bold">0</span></div>
+        </div>
+        <div id="race-track" class="mb-4">
+            <div id="player-boat"></div>
+            <div id="river-obstacle"><img id="river-obstacle-img" src="" alt=""></div>
+            <div id="finish-line"></div>
+        </div>
+        <div id="question-area" class="panel mb-4 text-gray-800">
+            <p id="question-text" class="mb-4 text-center">Loading question...</p>
+            <div id="answer-options" class="grid grid-cols-1 gap-3"></div>
+            <div id="hint-section" class="mt-4 hidden">
+                <button id="hint-button" class="pixel-button">Get Hint (-10 Points)</button>
+                <p id="hint-text" class="mt-2 text-center"></p>
+            </div>
+        </div>
+        <div id="challenge-modal" class="panel hidden text-center">
+            <div id="challenge-warning"></div>
+            <img id="challenge-image" src="" alt="" class="mx-auto mb-2" style="max-height:60px;">
+            <div id="challenge-english" class="mb-2 font-bold"></div>
+            <div id="challenge-iban" class="mb-2"></div>
+            <div id="selected-order"></div>
+            <div id="challenge-tiles" class="flex flex-wrap justify-center gap-2 mb-2"></div>
+            <button id="challenge-skip" class="pixel-button mt-2">Skip (-20 points)</button>
+        </div>
+        <div id="message-box" class="text-center p-3 mb-4 rounded-none font-bold hidden"></div>
+        <div id="game-over-panel" class="panel text-center hidden">
+            <h2 id="game-over-title" class="text-lg sm:text-xl mb-3 text-gray-800">Race Finished!</h2>
+            <img id="congrats-image" src="congrats.png" alt="Congratulations!" class="hidden">
+            <p class="mb-4 text-gray-700">Final Score: <span id="final-score" class="font-bold">0</span></p>
+            <button id="play-again-button" class="pixel-button">Play Again</button>
+        </div>
+        <div id="leaderboard" class="panel hidden">
+            <h3 class="text-lg sm:text-xl mb-3 text-gray-800">Leaderboard</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+    </div>
+    <audio id="correct-sound" src="correct-sound.mp3" preload="auto"></audio>
+    <audio id="incorrect-sound" src="incorrect-sound.mp3" preload="auto"></audio>
+    <audio id="congrats-sound" src="congrats-sound.mp3" preload="auto"></audio>
+    <audio id="rock-sound" src="rock.mp3" preload="auto"></audio>
+    <audio id="crocodile-sound" src="crocodile.mp3" preload="auto"></audio>
+    <script>
+        // --- GAME DATA ---
+        const questions = [
+            { phrase: "What does 'gari' mean?", correctAnswer: "top, blouse, shirt", wrongAnswers: ["pants", "hat"], hint: "It's an upper-body garment." },
+            { phrase: "What does 'tanchut' mean?", correctAnswer: "pants, trousers", wrongAnswers: ["shirt", "hat"], hint: "It's worn on the lower body." },
+            { phrase: "What does 'tawas' mean?", correctAnswer: "dawn", wrongAnswers: ["noon", "evening"], hint: "The time when the sun rises." },
+            { phrase: "What does 'menoa' mean?", correctAnswer: "land", wrongAnswers: ["house", "farm"], hint: "A broad area, not a building." },
+            { phrase: "What does 'engkiang' mean?", correctAnswer: "crocodile", wrongAnswers: ["elephant", "owl"], hint: "A reptile that lives in water." },
+            { phrase: "What does 'brang' mean?", correctAnswer: "shoulder", wrongAnswers: ["arm", "neck"], hint: "Connects the arm to the torso." },
+            { phrase: "What does 'buk' mean?", correctAnswer: "hair", wrongAnswers: ["beard", "eyebrow"], hint: "Grows on the scalp." },
+            { phrase: "What does 'bulu bansu' mean?", correctAnswer: "eyebrow", wrongAnswers: ["eyelash", "hair"], hint: "Protects the eyes from sweat." },
+            { phrase: "What does 'manuk' mean?", correctAnswer: "chicken", wrongAnswers: ["duck", "rat"], hint: "Common farm bird." },
+            { phrase: "What does 'endaraja' mean?", correctAnswer: "rainbow", wrongAnswers: ["clouds", "wind"], hint: "Colorful arc after rain." },
+            { phrase: "What does 'dilah' mean?", correctAnswer: "tongue", wrongAnswers: ["teeth", "lips"], hint: "Used for tasting and speaking." },
+            { phrase: "What does 'sadau' mean?", correctAnswer: "loft", wrongAnswers: ["kitchen", "shed"], hint: "It's a space above the main floor, sometimes used for sleeping or storage." },
+            { phrase: "What does 'idung' mean?", correctAnswer: "nose", wrongAnswers: ["ear", "eye"], hint: "Organ for smelling." },
+            { phrase: "What does 'nyabur' mean?", correctAnswer: "sword", wrongAnswers: ["penknife", "scissors"], hint: "Traditional weapon with a blade." },
+            { phrase: "What does 'sigat' mean?", correctAnswer: "handsome", wrongAnswers: ["pretty", "cute"], hint: " It's a compliment you'd give someone who looks really good — usually to a man." },
+            { phrase: "What does 'sebedau' mean?", correctAnswer: "before", wrongAnswers: ["after", "during"], hint: "This word talks about something that happens earlier than another even." },
+            { phrase: "What does 'kening' mean?", correctAnswer: "forehead", wrongAnswers: ["cheek", "chin"], hint: "Upper part of the face." },
+            { phrase: "What does 'kuyu' mean?", correctAnswer: "cheek", wrongAnswers: ["forehead", "chin"], hint: "Located below the eye." },
+            { phrase: "What does 'leka mata' mean?", correctAnswer: "eyeball", wrongAnswers: ["eyelid", "eyebrow"], hint: "Contains the pupil and iris." },
+            { phrase: "What does 'aki icit' mean?", correctAnswer: "great grandfather", wrongAnswers: ["uncle", "neighbour"], hint: "This is your grandfather’s father." },
+            { phrase: "What does 'ambai' mean?", correctAnswer: "lover", wrongAnswers: ["dancer", "cousin"], hint: " This person is very special to you." },
+            { phrase: "What does 'mua' mean?", correctAnswer: "face", wrongAnswers: ["head", "neck"], hint: "Front of the head." },
+            { phrase: "What does 'ngeli' mean?", correctAnswer: "teeth", wrongAnswers: ["gum", "tongue"], hint: "Used for chewing." },
+            { phrase: "What does 'nyawa' mean?", correctAnswer: "mouth", wrongAnswers: ["nose", "ear"], hint: "Opening for eating and speaking." },
+            { phrase: "What does 'pemansai' mean?", correctAnswer: "fireplace", wrongAnswers: ["oven", "stove"], hint: "Traditional cooking area." },
+            { phrase: "What does 'pegu' mean?", correctAnswer: "neck", wrongAnswers: ["head", "shoulder"], hint: "Connects head to torso." },
+            { phrase: "What does 'pending' mean?", correctAnswer: "ear", wrongAnswers: ["nose", "eye"], hint: "Organ for hearing." },
+            { phrase: "What does 'geladak' mean?", correctAnswer: "roof", wrongAnswers: ["floor", "basement"], hint: "Top covering of a building." },
+            { phrase: "What does 'saritu' mean?", correctAnswer: "today", wrongAnswers: ["tomorrow", "chin"], hint: "Current day." },
+            { phrase: "What does 'sumit' mean?", correctAnswer: "moustache", wrongAnswers: ["beard", "eyebrow"], hint: "Hair above the upper lip." },
+            { phrase: "What does 'tisi' mean?", correctAnswer: "side", wrongAnswers: ["front", "back"], hint: "Lateral position." },
+            { phrase: "What does 'bakani' mean?", correctAnswer: "how", wrongAnswers: ["when", "who"], hint: "Asks about manner/method." },
+            { phrase: "What does 'tuchum' mean?", correctAnswer: "smile", wrongAnswers: ["laugh", "cry"], hint: "Friendly facial expression." },
+            { phrase: "What does 'untak' mean?", correctAnswer: "brain", wrongAnswers: ["heart", "gallbladder"], hint: "Organ for thinking." }
+        ];
+
+        // --- CHALLENGE DATA ---
+        const challenges = [
+            {
+                iban: "Pukul berapa nuan abis gawa?",
+                english: "What time do you finish work?",
+                image: "rock.png",
+                warning: "You have encountered rocks!",
+                sound: "rock"
+            },
+            {
+                iban: "Nuan datai ari ni?",
+                english: "Where are you from?",
+                image: "crocodile.png",
+                warning: "You have encountered a crocodile!",
+                sound: "crocodile"
+            }
+        ];
+        // Indices for challenge questions: first early, second near the end (set dynamically)
+        let challengeIndices = [2, null];
+        let challengeCount = 0;
+
+        // --- GAME STATE ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let playerBoatPosition = 5;
+        const finishLinePosition = 90;
+        const moveAmount = 5;
+        const pointsCorrect = 50;
+        const pointsIncorrect = -10;
+        const pointsHint = -10;
+        let gameActive = false;
+        let shuffledQuestions = [];
+
+        // --- DOM ELEMENTS ---
+        const scoreEl = document.getElementById('score');
+        const playerBoat = document.getElementById('player-boat');
+        const questionArea = document.getElementById('question-area');
+        const questionTextEl = document.getElementById('question-text');
+        const answerOptionsEl = document.getElementById('answer-options');
+        const hintSectionEl = document.getElementById('hint-section');
+        const hintButtonEl = document.getElementById('hint-button');
+        const hintTextEl = document.getElementById('hint-text');
+        const messageBox = document.getElementById('message-box');
+        const gameOverPanel = document.getElementById('game-over-panel');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const finalScoreEl = document.getElementById('final-score');
+        const playAgainButton = document.getElementById('play-again-button');
+        const leaderboardEl = document.getElementById('leaderboard');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
+        const congratsSound = document.getElementById('congrats-sound');
+        const congratsImage = document.getElementById('congrats-image');
+        const rockSound = document.getElementById('rock-sound');
+        const crocodileSound = document.getElementById('crocodile-sound');
+        // Challenge modal elements
+        const challengeModal = document.getElementById('challenge-modal');
+        const challengeImage = document.getElementById('challenge-image');
+        const challengeEnglish = document.getElementById('challenge-english');
+        const challengeIban = document.getElementById('challenge-iban');
+        const challengeTiles = document.getElementById('challenge-tiles');
+        const challengeSkip = document.getElementById('challenge-skip');
+        const challengeWarning = document.getElementById('challenge-warning');
+        const selectedOrder = document.getElementById('selected-order');
+        // River obstacle elements
+        const riverObstacle = document.getElementById('river-obstacle');
+        const riverObstacleImg = document.getElementById('river-obstacle-img');
+
+        // --- UTILITY FUNCTIONS ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        // --- LEADERBOARD FUNCTIONS ---
+        function loadLeaderboard() {
+            const storedScores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            return storedScores.sort((a, b) => b.score - a.score);
+        }
+        function saveLeaderboard(scores) {
+            localStorage.setItem('leaderboard', JSON.stringify(scores));
+        }
+        function updateLeaderboard(newScore) {
+            const scores = loadLeaderboard();
+            scores.push({ score: newScore });
+            saveLeaderboard(scores);
+            displayLeaderboard(scores);
+        }
+        function displayLeaderboard(scores) {
+            leaderboardBody.innerHTML = '';
+            scores.slice(0, 10).forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${index + 1}</td><td>${entry.score}</td>`;
+                leaderboardBody.appendChild(row);
+            });
+            leaderboardEl.classList.remove('hidden');
+        }
+        // --- CORE FUNCTIONS ---
+        function initGame() {
+            score = 0;
+            currentQuestionIndex = 0;
+            playerBoatPosition = 5;
+            playerBoat.style.left = `${playerBoatPosition}%`;
+            shuffledQuestions = [...questions];
+            shuffleArray(shuffledQuestions);
+            // Set the second challenge index to near the end (e.g. 2nd last question)
+            challengeIndices = [2, Math.max(shuffledQuestions.length - 2, 3)];
+            challengeCount = 0;
+            updateScore();
+            displayQuestion();
+            gameOverPanel.classList.add('hidden');
+            questionArea.classList.remove('hidden');
+            challengeModal.classList.add('hidden');
+            hideRiverObstacle();
+            hideMessageBox();
+            gameActive = true;
+            congratsImage.classList.add('hidden');
+            // Ensure boat starts at the beginning
+            playerBoat.style.transition = "none";
+            playerBoat.style.left = "5%";
+            setTimeout(() => {
+                playerBoat.style.transition = "left 0.5s linear";
+            }, 10);
+        }
+        function displayQuestion() {
+            // Challenge logic
+            if (challengeIndices.includes(currentQuestionIndex) && challengeCount < challenges.length) {
+                showChallenge(challenges[challengeCount]);
+                challengeCount++;
+                return;
+            }
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                endGame("Out of Questions!");
+                return;
+            }
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            questionTextEl.textContent = currentQuestion.phrase;
+            const options = [currentQuestion.correctAnswer, ...currentQuestion.wrongAnswers];
+            shuffleArray(options);
+            answerOptionsEl.innerHTML = '';
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'pixel-button w-full';
+                button.onclick = () => handleAnswer(option);
+                answerOptionsEl.appendChild(button);
+            });
+            hintTextEl.textContent = '';
+            hintSectionEl.classList.remove('hidden');
+            hintButtonEl.disabled = false;
+        }
+        function handleAnswer(selectedAnswer) {
+            if (!gameActive) return;
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            const correctAnswer = currentQuestion.correctAnswer;
+            const buttons = answerOptionsEl.querySelectorAll('button');
+            buttons.forEach(button => button.disabled = true);
+            if (selectedAnswer === correctAnswer) {
+                score += pointsCorrect;
+                showMessage("Correct!", "success");
+                playSound(correctSound);
+
+                // Calculate next position, but don't overshoot finish line
+                let nextPosition = playerBoatPosition + moveAmount;
+                if (nextPosition > finishLinePosition) nextPosition = finishLinePosition;
+
+                playerBoatPosition = nextPosition;
+                playerBoat.style.left = `${Math.min(playerBoatPosition, 100)}%`;
+
+                if (checkWinCondition()) return;
+            } else {
+                score = Math.max(0, score + pointsIncorrect);
+                showMessage(`Incorrect! Answer: ${correctAnswer}`, "error");
+                playSound(incorrectSound);
+            }
+            updateScore();
+            currentQuestionIndex++;
+            setTimeout(() => {
+                if (gameActive) {
+                    if (currentQuestionIndex < shuffledQuestions.length) {
+                        displayQuestion();
+                        hideMessageBox();
+                    } else {
+                        endGame("Finished All Questions!");
+                    }
+                }
+            }, 1500);
+        }
+        function checkWinCondition() {
+            if (playerBoatPosition >= finishLinePosition) {
+                setTimeout(() => endGame("You Reached the Finish Line!"), 100);
+                return true;
+            }
+            return false;
+        }
+        function updateScore() {
+            scoreEl.textContent = score;
+        }
+        function endGame(reason) {
+            if (!gameActive) return;
+            gameActive = false;
+            questionArea.classList.add('hidden');
+            challengeModal.classList.add('hidden');
+            hideRiverObstacle();
+            hideMessageBox();
+            gameOverTitle.textContent = reason;
+            finalScoreEl.textContent = score;
+            // Move boat to finish line if not already there
+            playerBoat.style.left = finishLinePosition + "%";
+            if (playerBoatPosition < finishLinePosition) {
+                playerBoatPosition = finishLinePosition;
+            }
+            if (playerBoatPosition >= finishLinePosition) {
+                congratsImage.classList.remove('hidden');
+                playSound(congratsSound);
+            }
+            updateLeaderboard(score);
+            gameOverPanel.classList.remove('hidden');
+        }
+        function showMessage(text, type = 'info') {
+            messageBox.textContent = text;
+            messageBox.classList.remove('hidden', 'bg-green-600', 'bg-red-600', 'bg-blue-600', 'text-white', 'text-black');
+            switch (type) {
+                case 'success':
+                    messageBox.classList.add('bg-green-600', 'text-white');
+                    break;
+                case 'error':
+                    messageBox.classList.add('bg-red-600', 'text-white');
+                    break;
+                case 'info':
+                default:
+                    messageBox.classList.add('bg-blue-600', 'text-white');
+                    break;
+            }
+            messageBox.classList.remove('hidden');
+        }
+        function hideMessageBox() {
+            if (!messageBox.classList.contains('hidden')) {
+                messageBox.classList.add('hidden');
+            }
+        }
+        function playSound(sound) {
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => {});
+            }
+        }
+        function handleHint() {
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            score = Math.max(0, score + pointsHint);
+            updateScore();
+            showMessage("Hint Used!", "info");
+            hintTextEl.textContent = `Hint: ${currentQuestion.hint}`;
+            hintButtonEl.disabled = true;
+        }
+
+        // --- CHALLENGE FUNCTIONS ---
+        function showRiverObstacle(challenge) {
+            // Calculate the obstacle position based on the boat's current position
+            // Place it a fixed distance ahead of the boat, but not past the finish line
+            const boatLeftPercent = parseFloat(playerBoat.style.left) || 5;
+            let obstacleLeftPercent = boatLeftPercent + 15;
+            if (obstacleLeftPercent > 85) obstacleLeftPercent = 85; // Don't go past finish line
+
+            riverObstacle.style.display = 'block';
+            riverObstacle.style.left = obstacleLeftPercent + '%';
+            riverObstacleImg.src = challenge.image;
+            riverObstacleImg.alt = challenge.warning || "Obstacle";
+        }
+        function hideRiverObstacle() {
+            riverObstacle.style.display = 'none';
+            riverObstacleImg.src = '';
+        }
+        function showChallenge(challenge) {
+            questionArea.classList.add('hidden');
+            challengeModal.classList.remove('hidden');
+            challengeImage.src = challenge.image;
+            challengeImage.alt = challenge.english;
+            challengeEnglish.textContent = `English: ${challenge.english}`;
+            challengeIban.textContent = "Arrange the Iban words:";
+            // Split Iban sentence into tiles (words)
+            const words = challenge.iban.replace(/[?.,!]/g, '').split(' ');
+            const scrambled = [...words].sort(() => Math.random() - 0.5);
+            challengeTiles.innerHTML = '';
+            scrambled.forEach(word => {
+                const btn = document.createElement('button');
+                btn.textContent = word;
+                btn.className = 'pixel-button';
+                btn.onclick = () => selectTile(btn, word, words, challenge);
+                challengeTiles.appendChild(btn);
+            });
+            challengeModal.selected = [];
+            updateSelectedOrder(words.length);
+            showRiverObstacle(challenge);
+            if (challenge.sound === "rock") playSound(rockSound);
+            else if (challenge.sound === "crocodile") playSound(crocodileSound);
+            challengeWarning.textContent = challenge.warning || "You have encountered an obstacle!";
+            showMessage(challenge.warning || "You have encountered an obstacle!", "error");
+        }
+        function updateSelectedOrder(wordCount) {
+            selectedOrder.innerHTML = '';
+            const selected = challengeModal.selected || [];
+            for (let i = 0; i < wordCount; i++) {
+                const box = document.createElement('div');
+                box.className = 'selected-box';
+                box.textContent = selected[i] || '';
+                selectedOrder.appendChild(box);
+            }
+        }
+        function selectTile(btn, word, correctWords, challenge) {
+            btn.disabled = true;
+            challengeModal.selected = challengeModal.selected || [];
+            challengeModal.selected.push(word);
+            updateSelectedOrder(correctWords.length);
+            if (challengeModal.selected.length === correctWords.length) {
+                const userSentence = challengeModal.selected.join(' ');
+                if (userSentence === correctWords.join(' ')) {
+                    showMessage("Correct! You passed the obstacle.", "success");
+                    playSound(correctSound);
+                    setTimeout(() => {
+                        challengeModal.classList.add('hidden');
+                        questionArea.classList.remove('hidden');
+                        hideRiverObstacle();
+                        hideMessageBox();
+                        displayQuestion();
+                    }, 1200);
+                } else {
+                    showMessage("Incorrect order! Try again.", "error");
+                    playSound(incorrectSound);
+                    setTimeout(() => {
+                        showChallenge(challenge);
+                        hideMessageBox();
+                    }, 1200);
+                }
+            }
+        }
+        challengeSkip.addEventListener('click', function() {
+            score = Math.max(0, score - 20);
+            updateScore();
+            showMessage("Skipped! -20 points.", "info");
+            setTimeout(() => {
+                challengeModal.classList.add('hidden');
+                questionArea.classList.remove('hidden');
+                hideRiverObstacle();
+                hideMessageBox();
+                displayQuestion();
+            }, 1000);
+        });
+
+        // --- EVENT LISTENERS ---
+        playAgainButton.addEventListener('click', initGame);
+        hintButtonEl.addEventListener('click', handleHint);
+
+        // --- INITIALIZE GAME ON LOAD ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            displayLeaderboard(loadLeaderboard());
+        });
+    </script>
+</body>
+</html>
