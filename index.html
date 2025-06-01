@@ -517,7 +517,8 @@
                 congratsImage.classList.remove('hidden');
                 playSound(congratsSound);
             }
-            // Show name entry panel
+            // Show both panels
+            gameOverPanel.classList.remove('hidden');
             nameEntryPanel.classList.remove('hidden');
             playerNameInput.value = "";
             playerNameInput.focus();
