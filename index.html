@@ -162,6 +162,26 @@
             margin: 0 2px;
             box-shadow: inset 1px 1px 0 #d0d0d0;
         }
+        .clue-btn {
+            background-color: #bbf7d0 !important;
+            color: #166534 !important;
+            border: 2px solid #22c55e !important;
+            font-weight: bold;
+            cursor: default !important;
+        }
+        .correct-tile {
+            background-color: #bbf7d0 !important;
+            color: #166534 !important;
+            border: 2px solid #22c55e !important;
+        }
+        .incorrect-tile {
+            background-color: #fecaca !important;
+            color: #991b1b !important;
+            border: 2px solid #ef4444 !important;
+        }
+        #challenge-clue {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-700 flex flex-col items-center justify-center min-h-screen p-4 text-xs sm:text-sm">
@@ -188,6 +208,7 @@
             <img id="challenge-image" src="" alt="" class="mx-auto mb-2" style="max-height:60px;">
             <div id="challenge-english" class="mb-2 font-bold"></div>
             <div id="challenge-iban" class="mb-2"></div>
+            <div id="challenge-clue" class="mb-2 text-green-700 font-bold"></div>
             <div id="selected-order"></div>
             <div id="challenge-tiles" class="flex flex-wrap justify-center gap-2 mb-2"></div>
             <button id="challenge-skip" class="pixel-button mt-2">Skip (-20 points)</button>
@@ -316,6 +337,7 @@
         const challengeImage = document.getElementById('challenge-image');
         const challengeEnglish = document.getElementById('challenge-english');
         const challengeIban = document.getElementById('challenge-iban');
+        const challengeClue = document.getElementById('challenge-clue');
         const challengeTiles = document.getElementById('challenge-tiles');
         const challengeSkip = document.getElementById('challenge-skip');
         const challengeWarning = document.getElementById('challenge-warning');
@@ -539,8 +561,16 @@
             challengeIban.textContent = "Arrange the Iban words:";
             // Split Iban sentence into tiles (words)
             const words = challenge.iban.replace(/[?.,!]/g, '').split(' ');
-            const scrambled = [...words].sort(() => Math.random() - 0.5);
+            // Show first word as clue, scramble the rest
+            const scrambled = [...words].slice(1).sort(() => Math.random() - 0.5);
             challengeTiles.innerHTML = '';
+            // First word as clue
+            const clueBtn = document.createElement('button');
+            clueBtn.textContent = words[0];
+            clueBtn.className = 'pixel-button clue-btn';
+            clueBtn.disabled = true;
+            challengeTiles.appendChild(clueBtn);
+            // Scrambled rest
             scrambled.forEach(word => {
                 const btn = document.createElement('button');
                 btn.textContent = word;
@@ -548,7 +578,12 @@
                 btn.onclick = () => selectTile(btn, word, words, challenge);
                 challengeTiles.appendChild(btn);
             });
-            challengeModal.selected = [];
+            // Show clue: first letters
+            const firstLetters = words.map(w => w[0].toUpperCase()).join(' ');
+            challengeClue.textContent = `Clue: First letters of each word: ${firstLetters}`;
+            // Set up selected array with the clue word already selected
+            challengeModal.selected = [words[0]];
+            challengeModal.correctWords = words;
             updateSelectedOrder(words.length);
             showRiverObstacle(challenge);
             if (challenge.sound === "rock") playSound(rockSound);
@@ -559,16 +594,25 @@
         function updateSelectedOrder(wordCount) {
             selectedOrder.innerHTML = '';
             const selected = challengeModal.selected || [];
+            const correctWords = challengeModal.correctWords || [];
             for (let i = 0; i < wordCount; i++) {
                 const box = document.createElement('div');
                 box.className = 'selected-box';
                 box.textContent = selected[i] || '';
+                if (selected[i]) {
+                    if (correctWords[i] && selected[i] === correctWords[i]) {
+                        box.classList.add('correct-tile');
+                    } else if (correctWords[i]) {
+                        box.classList.add('incorrect-tile');
+                    }
+                }
                 selectedOrder.appendChild(box);
             }
         }
         function selectTile(btn, word, correctWords, challenge) {
             btn.disabled = true;
             challengeModal.selected = challengeModal.selected || [];
+            challengeModal.correctWords = correctWords;
             challengeModal.selected.push(word);
             updateSelectedOrder(correctWords.length);
             if (challengeModal.selected.length === correctWords.length) {
