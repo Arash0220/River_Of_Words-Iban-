@@ -182,6 +182,23 @@
         #challenge-clue {
             margin-bottom: 8px;
         }
+        #name-entry-panel {
+            background-color: #e0e0e0;
+            border: 4px solid #505050;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            image-rendering: pixelated;
+        }
+        #name-entry-panel input {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            padding: 6px 10px;
+            border: 2px solid #505050;
+            margin-right: 10px;
+            width: 160px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="bg-gray-700 flex flex-col items-center justify-center min-h-screen p-4 text-xs sm:text-sm">
@@ -220,12 +237,18 @@
             <p class="mb-4 text-gray-700">Final Score: <span id="final-score" class="font-bold">0</span></p>
             <button id="play-again-button" class="pixel-button">Play Again</button>
         </div>
+        <div id="name-entry-panel" class="hidden">
+            <h3 class="mb-2 text-gray-800">Enter Your Name for the Leaderboard</h3>
+            <input type="text" id="player-name-input" maxlength="16" placeholder="Your Name" autocomplete="off" />
+            <button id="submit-name-btn" class="pixel-button">Submit</button>
+        </div>
         <div id="leaderboard" class="panel hidden">
             <h3 class="text-lg sm:text-xl mb-3 text-gray-800">Leaderboard</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Rank</th>
+                        <th>Name</th>
                         <th>Score</th>
                     </tr>
                 </thead>
@@ -240,6 +263,9 @@
     <audio id="crocodile-sound" src="crocodile.mp3" preload="auto"></audio>
     <script>
         // --- GAME DATA ---
+        // ... (questions and challenges arrays as before) ...
+
+        // --- CHALLENGE DATA ---
         const questions = [
             { phrase: "What does 'gari' mean?", correctAnswer: "top, blouse, shirt", wrongAnswers: ["pants", "hat"], hint: "It's an upper-body garment." },
             { phrase: "What does 'tanchut' mean?", correctAnswer: "pants, trousers", wrongAnswers: ["shirt", "hat"], hint: "It's worn on the lower body." },
@@ -277,7 +303,6 @@
             { phrase: "What does 'untak' mean?", correctAnswer: "brain", wrongAnswers: ["heart", "gallbladder"], hint: "Organ for thinking." }
         ];
 
-        // --- CHALLENGE DATA ---
         const challenges = [
             {
                 iban: "Pukul berapa nuan abis gawa?",
@@ -294,7 +319,6 @@
                 sound: "crocodile"
             }
         ];
-        // Indices for challenge questions: first early, second near the end (set dynamically)
         let challengeIndices = [2, null];
         let challengeCount = 0;
 
@@ -309,6 +333,7 @@
         const pointsHint = -10;
         let gameActive = false;
         let shuffledQuestions = [];
+        let playerName = "";
 
         // --- DOM ELEMENTS ---
         const scoreEl = document.getElementById('score');
@@ -332,7 +357,6 @@
         const congratsImage = document.getElementById('congrats-image');
         const rockSound = document.getElementById('rock-sound');
         const crocodileSound = document.getElementById('crocodile-sound');
-        // Challenge modal elements
         const challengeModal = document.getElementById('challenge-modal');
         const challengeImage = document.getElementById('challenge-image');
         const challengeEnglish = document.getElementById('challenge-english');
@@ -342,9 +366,11 @@
         const challengeSkip = document.getElementById('challenge-skip');
         const challengeWarning = document.getElementById('challenge-warning');
         const selectedOrder = document.getElementById('selected-order');
-        // River obstacle elements
         const riverObstacle = document.getElementById('river-obstacle');
         const riverObstacleImg = document.getElementById('river-obstacle-img');
+        const nameEntryPanel = document.getElementById('name-entry-panel');
+        const playerNameInput = document.getElementById('player-name-input');
+        const submitNameBtn = document.getElementById('submit-name-btn');
 
         // --- UTILITY FUNCTIONS ---
         function shuffleArray(array) {
@@ -353,6 +379,7 @@
                 [array[i], array[j]] = [array[j], array[i]];
             }
         }
+
         // --- LEADERBOARD FUNCTIONS ---
         function loadLeaderboard() {
             const storedScores = JSON.parse(localStorage.getItem('leaderboard')) || [];
@@ -361,9 +388,9 @@
         function saveLeaderboard(scores) {
             localStorage.setItem('leaderboard', JSON.stringify(scores));
         }
-        function updateLeaderboard(newScore) {
+        function updateLeaderboard(newScore, newName) {
             const scores = loadLeaderboard();
-            scores.push({ score: newScore });
+            scores.push({ name: newName || "PLAYER", score: newScore });
             saveLeaderboard(scores);
             displayLeaderboard(scores);
         }
@@ -371,11 +398,12 @@
             leaderboardBody.innerHTML = '';
             scores.slice(0, 10).forEach((entry, index) => {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${index + 1}</td><td>${entry.score}</td>`;
+                row.innerHTML = `<td>${index + 1}</td><td>${entry.name || "PLAYER"}</td><td>${entry.score}</td>`;
                 leaderboardBody.appendChild(row);
             });
             leaderboardEl.classList.remove('hidden');
         }
+
         // --- CORE FUNCTIONS ---
         function initGame() {
             score = 0;
@@ -384,7 +412,6 @@
             playerBoat.style.left = `${playerBoatPosition}%`;
             shuffledQuestions = [...questions];
             shuffleArray(shuffledQuestions);
-            // Set the second challenge index to near the end (e.g. 2nd last question)
             challengeIndices = [2, Math.max(shuffledQuestions.length - 2, 3)];
             challengeCount = 0;
             updateScore();
@@ -394,9 +421,10 @@
             challengeModal.classList.add('hidden');
             hideRiverObstacle();
             hideMessageBox();
+            leaderboardEl.classList.add('hidden');
+            nameEntryPanel.classList.add('hidden');
             gameActive = true;
             congratsImage.classList.add('hidden');
-            // Ensure boat starts at the beginning
             playerBoat.style.transition = "none";
             playerBoat.style.left = "5%";
             setTimeout(() => {
@@ -404,7 +432,6 @@
             }, 10);
         }
         function displayQuestion() {
-            // Challenge logic
             if (challengeIndices.includes(currentQuestionIndex) && challengeCount < challenges.length) {
                 showChallenge(challenges[challengeCount]);
                 challengeCount++;
@@ -440,14 +467,10 @@
                 score += pointsCorrect;
                 showMessage("Correct!", "success");
                 playSound(correctSound);
-
-                // Calculate next position, but don't overshoot finish line
                 let nextPosition = playerBoatPosition + moveAmount;
                 if (nextPosition > finishLinePosition) nextPosition = finishLinePosition;
-
                 playerBoatPosition = nextPosition;
                 playerBoat.style.left = `${Math.min(playerBoatPosition, 100)}%`;
-
                 if (checkWinCondition()) return;
             } else {
                 score = Math.max(0, score + pointsIncorrect);
@@ -486,7 +509,6 @@
             hideMessageBox();
             gameOverTitle.textContent = reason;
             finalScoreEl.textContent = score;
-            // Move boat to finish line if not already there
             playerBoat.style.left = finishLinePosition + "%";
             if (playerBoatPosition < finishLinePosition) {
                 playerBoatPosition = finishLinePosition;
@@ -495,8 +517,10 @@
                 congratsImage.classList.remove('hidden');
                 playSound(congratsSound);
             }
-            updateLeaderboard(score);
-            gameOverPanel.classList.remove('hidden');
+            // Show name entry panel
+            nameEntryPanel.classList.remove('hidden');
+            playerNameInput.value = "";
+            playerNameInput.focus();
         }
         function showMessage(text, type = 'info') {
             messageBox.textContent = text;
@@ -537,12 +561,9 @@
 
         // --- CHALLENGE FUNCTIONS ---
         function showRiverObstacle(challenge) {
-            // Calculate the obstacle position based on the boat's current position
-            // Place it a fixed distance ahead of the boat, but not past the finish line
             const boatLeftPercent = parseFloat(playerBoat.style.left) || 5;
             let obstacleLeftPercent = boatLeftPercent + 15;
-            if (obstacleLeftPercent > 85) obstacleLeftPercent = 85; // Don't go past finish line
-
+            if (obstacleLeftPercent > 85) obstacleLeftPercent = 85;
             riverObstacle.style.display = 'block';
             riverObstacle.style.left = obstacleLeftPercent + '%';
             riverObstacleImg.src = challenge.image;
@@ -559,18 +580,14 @@
             challengeImage.alt = challenge.english;
             challengeEnglish.textContent = `English: ${challenge.english}`;
             challengeIban.textContent = "Arrange the Iban words:";
-            // Split Iban sentence into tiles (words)
             const words = challenge.iban.replace(/[?.,!]/g, '').split(' ');
-            // Show first word as clue, scramble the rest
             const scrambled = [...words].slice(1).sort(() => Math.random() - 0.5);
             challengeTiles.innerHTML = '';
-            // First word as clue
             const clueBtn = document.createElement('button');
             clueBtn.textContent = words[0];
             clueBtn.className = 'pixel-button clue-btn';
             clueBtn.disabled = true;
             challengeTiles.appendChild(clueBtn);
-            // Scrambled rest
             scrambled.forEach(word => {
                 const btn = document.createElement('button');
                 btn.textContent = word;
@@ -578,10 +595,8 @@
                 btn.onclick = () => selectTile(btn, word, words, challenge);
                 challengeTiles.appendChild(btn);
             });
-            // Show clue: first letters
             const firstLetters = words.map(w => w[0].toUpperCase()).join(' ');
             challengeClue.textContent = `Clue: First letters of each word: ${firstLetters}`;
-            // Set up selected array with the clue word already selected
             challengeModal.selected = [words[0]];
             challengeModal.correctWords = words;
             updateSelectedOrder(words.length);
@@ -599,6 +614,16 @@
                 const box = document.createElement('div');
                 box.className = 'selected-box';
                 box.textContent = selected[i] || '';
+                if (i > 0 && selected[i]) {
+                    // Add remove button for all except the clue word
+                    const removeBtn = document.createElement('span');
+                    removeBtn.textContent = ' ×';
+                    removeBtn.style.cursor = 'pointer';
+                    removeBtn.style.color = '#991b1b';
+                    removeBtn.style.fontWeight = 'bold';
+                    removeBtn.onclick = () => withdrawTile(i, selected[i]);
+                    box.appendChild(removeBtn);
+                }
                 if (selected[i]) {
                     if (correctWords[i] && selected[i] === correctWords[i]) {
                         box.classList.add('correct-tile');
@@ -637,6 +662,19 @@
                 }
             }
         }
+        // Allow user to withdraw a selected word (except clue word)
+        function withdrawTile(index, word) {
+            challengeModal.selected.splice(index, 1);
+            // Re-enable the corresponding button in challengeTiles
+            const buttons = challengeTiles.querySelectorAll('button');
+            for (let i = 1; i < buttons.length; i++) { // skip clue button
+                if (buttons[i].textContent === word && buttons[i].disabled) {
+                    buttons[i].disabled = false;
+                    break;
+                }
+            }
+            updateSelectedOrder(challengeModal.correctWords.length);
+        }
         challengeSkip.addEventListener('click', function() {
             score = Math.max(0, score - 20);
             updateScore();
@@ -653,6 +691,21 @@
         // --- EVENT LISTENERS ---
         playAgainButton.addEventListener('click', initGame);
         hintButtonEl.addEventListener('click', handleHint);
+
+        // Name entry submit
+        submitNameBtn.addEventListener('click', submitPlayerName);
+        playerNameInput.addEventListener('keydown', function(e) {
+            if (e.key === "Enter") submitPlayerName();
+        });
+
+        function submitPlayerName() {
+            let name = playerNameInput.value.trim().toUpperCase();
+            if (!name) name = "PLAYER";
+            playerName = name;
+            nameEntryPanel.classList.add('hidden');
+            updateLeaderboard(score, playerName);
+            leaderboardEl.classList.remove('hidden');
+        }
 
         // --- INITIALIZE GAME ON LOAD ---
         document.addEventListener('DOMContentLoaded', () => {
