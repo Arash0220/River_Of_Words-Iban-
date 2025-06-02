@@ -291,7 +291,7 @@
             { phrase: "What does 'mua' mean?", correctAnswer: "face", wrongAnswers: ["head", "neck"], hint: "Front of the head." },
             { phrase: "What does 'ngeli' mean?", correctAnswer: "teeth", wrongAnswers: ["gum", "tongue"], hint: "Used for chewing." },
             { phrase: "What does 'nyawa' mean?", correctAnswer: "mouth", wrongAnswers: ["nose", "ear"], hint: "Opening for eating and speaking." },
-            { phrase: "What does 'pemansai' mean?", correctAnswer: "fireplace", wrongAnswers: ["oven", "stove"], hint: "Traditional cooking area." },
+            { phrase: "What does 'pemansai' mean?", correctAnswer: "fireplace", wrongAnswers: ["oven", "stove"], hint: "a place for a domestic fire." },
             { phrase: "What does 'pegu' mean?", correctAnswer: "neck", wrongAnswers: ["head", "shoulder"], hint: "Connects head to torso." },
             { phrase: "What does 'pending' mean?", correctAnswer: "ear", wrongAnswers: ["nose", "eye"], hint: "Organ for hearing." },
             { phrase: "What does 'geladak' mean?", correctAnswer: "roof", wrongAnswers: ["floor", "basement"], hint: "Top covering of a building." },
@@ -412,7 +412,26 @@
             playerBoat.style.left = `${playerBoatPosition}%`;
             shuffledQuestions = [...questions];
             shuffleArray(shuffledQuestions);
-            challengeIndices = [2, Math.max(shuffledQuestions.length - 2, 3)];
+
+            // Guarantee: first challenge after Q2, second challenge at least 2/3 through and never consecutive
+            const total = shuffledQuestions.length;
+            // First challenge after 2 questions
+            let idx1 = 2;
+
+            // Second challenge at exactly 2/3 point, rounded down
+            let idx2 = Math.floor(total * 2 / 3);
+
+            // Ensure there's at least one question between challenges
+            if (idx2 - idx1 < 2) {
+                idx2 = idx1 + 2;
+            }
+
+            // If idx2 is out of bounds, set it to the last question
+            if (idx2 >= total) {
+                idx2 = total - 1;
+            }
+
+            challengeIndices = [idx1, idx2];
             challengeCount = 0;
             updateScore();
             displayQuestion();
@@ -432,12 +451,19 @@
             }, 10);
         }
         function displayQuestion() {
+            // If at a challenge index and not past the number of challenges, show challenge
             if (challengeIndices.includes(currentQuestionIndex) && challengeCount < challenges.length) {
                 showChallenge(challenges[challengeCount]);
                 challengeCount++;
                 return;
             }
             if (currentQuestionIndex >= shuffledQuestions.length) {
+                // If last challenge is set as the very last question, show it now
+                if (challengeCount < challenges.length && challengeIndices.includes(currentQuestionIndex)) {
+                    showChallenge(challenges[challengeCount]);
+                    challengeCount++;
+                    return;
+                }
                 endGame("Out of Questions!");
                 return;
             }
