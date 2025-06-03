@@ -67,7 +67,7 @@
             100% { background-position-x: 200px; }
         }
 
-        /* Cartoony horizontal sparkles/ripples */
+        
         .river-sparkle {
             position: absolute;
             left: 0; top: 0; width: 100%; height: 100%;
@@ -76,7 +76,7 @@
             background: url('data:image/svg+xml;utf8,<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg"><g stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.25"><line x1="10" y1="10" x2="30" y2="10"/><line x1="60" y1="20" x2="90" y2="20"/><line x1="120" y1="15" x2="140" y2="15"/><line x1="170" y1="35" x2="190" y2="35"/><line x1="40" y1="45" x2="70" y2="45"/><line x1="100" y1="50" x2="120" y2="50"/><line x1="150" y1="25" x2="170" y2="25"/></g></svg>');
             background-size: 200px 60px;
             animation: sparkle-move 4s linear infinite;
-            overflow: hidden; /* Ensures sparkles stay inside race-track */
+            overflow: hidden; 
             border-radius: 0;
         }
         @keyframes sparkle-move {
@@ -247,18 +247,17 @@
             text-transform: uppercase;
         }
 
-        /* --- Remove CRT effect --- */
+       
         body {
             background-image: url('puakumbu.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             position: relative;
-            /* Remove CRT Flicker animation */
-            /* animation: crt-flicker 1.5s infinite alternate; */
+            
         }
 
-        /* Remove CRT scanlines overlay */
+        
         body::before {
             display: none !important;
         }
@@ -327,8 +326,7 @@
     <audio id="rock-sound" src="rock.mp3" preload="auto"></audio>
     <audio id="crocodile-sound" src="crocodile.mp3" preload="auto"></audio>
     <script>
-        // --- GAME DATA ---
-        // ... (questions and challenges arrays as before) ...
+        
 
         // --- CHALLENGE DATA ---
         const questions = [
@@ -437,7 +435,7 @@
         const playerNameInput = document.getElementById('player-name-input');
         const submitNameBtn = document.getElementById('submit-name-btn');
 
-        // --- UTILITY FUNCTIONS ---
+        // --- UTILI (burn)---
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -445,7 +443,7 @@
             }
         }
 
-        // --- LEADERBOARD FUNCTIONS ---
+        // --- LEADERBOARD FUNCTIONS (yes sir)---
         function loadLeaderboard() {
             const storedScores = JSON.parse(localStorage.getItem('leaderboard')) || [];
             return storedScores.sort((a, b) => b.score - a.score);
@@ -469,7 +467,7 @@
             leaderboardEl.classList.remove('hidden');
         }
 
-        // --- CORE FUNCTIONS ---
+        // --- CORE (kawkaw) ---
         function initGame() {
             score = 0;
             currentQuestionIndex = 0;
@@ -773,7 +771,7 @@
             leaderboardEl.classList.remove('hidden');
         }
 
-        // --- INITIALIZE GAME ON LOAD ---
+        // --- INITIALIZE GAME (Start well son) ---
         document.addEventListener('DOMContentLoaded', () => {
             initGame();
             displayLeaderboard(loadLeaderboard());
@@ -781,3 +779,4 @@
     </script>
 </body>
 </html>
+<!-- sincerely tired of coding this. -->
