@@ -42,32 +42,46 @@
             box-shadow: inset 2px 2px 0px 0px #707070, inset -2px -2px 0px 0px #d0d0d0;
         }
         #race-track {
+            position: relative;
+            overflow: hidden; /* Ensures all child elements stay within border */
             width: 100%;
             height: 150px;
-            background:
-                repeating-linear-gradient(
-                    90deg,
-                    #1092e9 0px,
-                    #1092e9 24px,
-                    #5ec6fa 24px,
-                    #5ec6fa 48px,
-                    #1092e9 48px,
-                    #1092e9 72px
-                ),
-                repeating-linear-gradient(
-                    0deg,
-                    #1092e9 0px,
-                    #1092e9 24px,
-                    #5ec6fa 24px,
-                    #5ec6fa 48px,
-                    #1092e9 48px,
-                    #1092e9 72px
-                );
-            position: relative;
-            overflow: hidden;
+            background: #1092e9; /* solid river blue */
             border: 4px solid #022e4b;
             image-rendering: pixelated;
             box-shadow: 0 0 0 8px #1e3a5c inset;
+        }
+        .river-wave {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: url('data:image/svg+xml;utf8,<svg width="400" height="40" viewBox="0 0 400 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 20 Q 50 0 100 20 T 200 20 T 300 20 T 400 20 V40 H0Z" fill=\'%235ec6fa\' opacity=\'0.25\'/></svg>');
+            background-size: 200px 40px;
+            animation: river-wave-move 2s linear infinite;
+            overflow: hidden; /* Ensures wave stays inside race-track */
+            border-radius: 0; /* No border radius, matches container */
+        }
+        @keyframes river-wave-move {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 200px; }
+        }
+
+        /* Cartoony horizontal sparkles/ripples */
+        .river-sparkle {
+            position: absolute;
+            left: 0; top: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            background: url('data:image/svg+xml;utf8,<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg"><g stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.25"><line x1="10" y1="10" x2="30" y2="10"/><line x1="60" y1="20" x2="90" y2="20"/><line x1="120" y1="15" x2="140" y2="15"/><line x1="170" y1="35" x2="190" y2="35"/><line x1="40" y1="45" x2="70" y2="45"/><line x1="100" y1="50" x2="120" y2="50"/><line x1="150" y1="25" x2="170" y2="25"/></g></svg>');
+            background-size: 200px 60px;
+            animation: sparkle-move 4s linear infinite;
+            overflow: hidden; /* Ensures sparkles stay inside race-track */
+            border-radius: 0;
+        }
+        @keyframes sparkle-move {
+            0% { background-position-x: 0; }
+            100% { background-position-x: 200px; }
         }
         #player-boat {
             position: absolute;
@@ -76,11 +90,14 @@
             left: 5%;
             width: 50px;
             height: 30px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 30"><path d="M0 20 L5 10 L45 10 L50 20 L40 30 L10 30 Z" fill="%238B4513" stroke="%23000000" stroke-width="2"/></svg>');
+            background-image: url('boat.png');
             background-size: contain;
             background-repeat: no-repeat;
-            transition: left 0.5s linear;
-            image-rendering: pixelated;
+            animation: boat-bob 1.2s infinite alternate;
+        }
+        @keyframes boat-bob {
+            0% { top: 48%; }
+            100% { top: 52%; }
         }
         #river-obstacle {
             display: none;
@@ -119,15 +136,45 @@
         }
         .hidden { display: none; }
         #leaderboard {
-            margin-top: 20px;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 4px solid #505050;
-            background-color: #e0e0e0;
-            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            background: #23272e;
+            color: #ffe066;
+            border: 4px solid #ffe066;
+            text-shadow: 2px 2px 0 #000, 0 0 8px #ffe06688;
+            box-shadow: 0 0 16px #000a inset;
+            border-radius: 8px;
         }
-        #leaderboard table { width: 100%; border-collapse: collapse; }
-        #leaderboard th, #leaderboard td { text-align: left; padding: 5px; }
+        #leaderboard h3 {
+            color: #ffe066;
+            text-shadow: 2px 2px 0 #000, 0 0 8px #ffe06688;
+            margin-bottom: 12px;
+        }
+        #leaderboard table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        #leaderboard th, #leaderboard td {
+            color: #ffe066 !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 8px 24px;
+            font-size: 1em;
+            text-align: left;
+            letter-spacing: 1px;
+        }
+        #leaderboard th {
+            font-size: 1.1em;
+            text-align: left;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #ffe06644;
+        }
+        #leaderboard tr {
+            border-radius: 6px;
+        }
+        #leaderboard tr:nth-child(even) td {
+            background: #2d323b;
+        }
         #congrats-image {
             max-width: 200px;
             margin: 20px auto;
@@ -199,6 +246,22 @@
             width: 160px;
             text-transform: uppercase;
         }
+
+        /* --- Remove CRT effect --- */
+        body {
+            background-image: url('puakumbu.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            /* Remove CRT Flicker animation */
+            /* animation: crt-flicker 1.5s infinite alternate; */
+        }
+
+        /* Remove CRT scanlines overlay */
+        body::before {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="bg-gray-700 flex flex-col items-center justify-center min-h-screen p-4 text-xs sm:text-sm">
@@ -208,6 +271,8 @@
             <div>Score: <span id="score" class="font-bold">0</span></div>
         </div>
         <div id="race-track" class="mb-4">
+            <div class="river-wave"></div>
+            <div class="river-sparkle"></div>
             <div id="player-boat"></div>
             <div id="river-obstacle"><img id="river-obstacle-img" src="" alt=""></div>
             <div id="finish-line"></div>
@@ -412,26 +477,7 @@
             playerBoat.style.left = `${playerBoatPosition}%`;
             shuffledQuestions = [...questions];
             shuffleArray(shuffledQuestions);
-
-            // Guarantee: first challenge after Q2, second challenge at least 2/3 through and never consecutive
-            const total = shuffledQuestions.length;
-            // First challenge after 2 questions
-            let idx1 = 2;
-
-            // Second challenge at exactly 2/3 point, rounded down
-            let idx2 = Math.floor(total * 2 / 3);
-
-            // Ensure there's at least one question between challenges
-            if (idx2 - idx1 < 2) {
-                idx2 = idx1 + 2;
-            }
-
-            // If idx2 is out of bounds, set it to the last question
-            if (idx2 >= total) {
-                idx2 = total - 1;
-            }
-
-            challengeIndices = [idx1, idx2];
+            challengeIndices = [2, Math.max(shuffledQuestions.length - 2, 3)];
             challengeCount = 0;
             updateScore();
             displayQuestion();
@@ -451,19 +497,12 @@
             }, 10);
         }
         function displayQuestion() {
-            // If at a challenge index and not past the number of challenges, show challenge
             if (challengeIndices.includes(currentQuestionIndex) && challengeCount < challenges.length) {
                 showChallenge(challenges[challengeCount]);
                 challengeCount++;
                 return;
             }
             if (currentQuestionIndex >= shuffledQuestions.length) {
-                // If last challenge is set as the very last question, show it now
-                if (challengeCount < challenges.length && challengeIndices.includes(currentQuestionIndex)) {
-                    showChallenge(challenges[challengeCount]);
-                    challengeCount++;
-                    return;
-                }
                 endGame("Out of Questions!");
                 return;
             }
